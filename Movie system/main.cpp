@@ -1,65 +1,9 @@
-#include "cinema_booking.h"
-
-void displayCinemas(const std::vector<Cinema>& cinemas) {
-    std::cout << "\nAvailable Cinemas:\n";
-    for (size_t i = 0; i < cinemas.size(); ++i) {
-        std::cout << i + 1 << ". " << cinemas[i].name
-            << " (" << cinemas[i].location << ")\n";
-    }
-}
-
-void displayMovies(const Cinema& cinema) {
-    std::cout << "\nMovies available at " << cinema.name << ":\n";
-    for (size_t i = 0; i < cinema.movies.size(); ++i) {
-        const auto& movie = cinema.movies[i];
-        std::cout << i + 1 << ". " << movie.title
-            << " (" << movie.genre << ")\n"
-            << "   Director: " << movie.director << "\n"
-            << "   Duration: " << movie.duration / 60 << "h "
-            << movie.duration % 60 << "m\n"
-            << "   Age restriction: " << movie.ageRestriction << "+\n"
-            << "   Price: $" << movie.price << "\n";
-    }
-}
-
-void displayShowtimes(const Movie& movie) {
-    std::cout << "\nAvailable showtimes for " << movie.title << ":\n";
-    for (size_t i = 0; i < movie.showtimes.size(); ++i) {
-        std::cout << i + 1 << ". " << movie.showtimes[i] << "\n";
-    }
-}
-
-void clearInputBuffer() {
-    std::cin.clear();
-    std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
-}
-
-int getValidInput(int maxOption) {
-    int choice;
-    while (true) {
-        std::cout << "Enter your choice (1-" << maxOption << "): ";
-        std::cin >> choice;
-
-        if (std::cin.fail() || choice < 1 || choice > maxOption) {
-            std::cout << "Invalid input. Please try again.\n";
-            clearInputBuffer();
-        }
-        else {
-            clearInputBuffer();
-            return choice;
-        }
-    }
-}
-
-void displayBookingConfirmation(const Booking& booking) {
-    std::cout << "\n=== Booking Confirmation ===\n";
-    std::cout << "Cinema: " << booking.cinema << "\n";
-    std::cout << "Movie: " << booking.movie << "\n";
-    std::cout << "Showtime: " << booking.showtime << "\n";
-    std::cout << "Tickets: " << booking.tickets << "\n";
-    std::cout << "Total Price: $" << booking.totalPrice << "\n";
-    std::cout << "Thank you for your booking!\n";
-}
+#include <iostream>
+#include <vector>
+#include "cinema.h"
+#include "movie.h"
+#include "booking.h"
+#include "utils.h"
 
 int main() {
     std::vector<Cinema> cinemas = {
