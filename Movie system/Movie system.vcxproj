@@ -137,6 +137,7 @@
     <ClInclude Include="booking.h" />
     <ClInclude Include="cinema.h" />
     <ClInclude Include="movie.h" />
+    <ClInclude Include="precompiler.h" />
     <ClInclude Include="utils.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

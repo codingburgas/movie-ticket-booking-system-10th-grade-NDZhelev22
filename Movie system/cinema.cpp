@@ -1,5 +1,4 @@
-#include "cinema.h"
-#include <iostream>
+#include "precompiler.h"
 
 void displayCinemas(const std::vector<Cinema>& cinemas) {
     std::cout << "\nAvailable Cinemas:\n";

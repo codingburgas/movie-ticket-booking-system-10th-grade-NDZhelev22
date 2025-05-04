@@ -1,5 +1,4 @@
-#include "booking.h"
-#include <iostream>
+#include "precompiler.h"
 
 void displayBookingConfirmation(const Booking& booking) {
     std::cout << "\n=== Booking Confirmation ===\n";

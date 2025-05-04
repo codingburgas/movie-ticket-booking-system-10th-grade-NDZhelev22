@@ -1,5 +1,4 @@
-#include "movie.h"
-#include <iostream>
+#include "precompiler.h"
 
 void displayShowtimes(const Movie& movie) {
     std::cout << "\nAvailable showtimes for " << movie.title << ":\n";
