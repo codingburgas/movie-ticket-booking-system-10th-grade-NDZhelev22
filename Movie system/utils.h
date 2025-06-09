@@ -3,5 +3,6 @@
 
 void clearInputBuffer();
 int getValidInput(int maxOption);
+void clearScreen();
 
 #endif
