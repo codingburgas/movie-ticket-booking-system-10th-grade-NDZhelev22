@@ -2,6 +2,7 @@
 #define BOOKING_H
 
 #include <string>
+#include <vector> 
 
 struct Booking {
     std::string cinema;
@@ -9,8 +10,8 @@ struct Booking {
     std::string showtime;
     int tickets;
     double totalPrice;
+    std::vector<std::string> selectedSeats;
 };
-
 void displayBookingConfirmation(const Booking& booking);
 
 #endif

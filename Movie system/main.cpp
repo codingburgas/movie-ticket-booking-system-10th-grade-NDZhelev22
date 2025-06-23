@@ -1,40 +1,136 @@
 #include <iostream>
 #include <vector>
+#include <map>
+#include <string> // Added for std::string functions like toupper
+#include <cctype> // Added for toupper
+#include <utility> // Added for std::pair
 #include "cinema.h"
 #include "movie.h"
-#include "booking.h"
-#include "utils.h"
+#include "booking.h" // Assuming booking.h exists
+#include "utils.h"   // Assuming utils.h exists with clearScreen, clearInputBuffer, displayCinemas, displayMovies, displayShowtimes, displayBookingConfirmation, getValidInput
+
+void displayLogo();
+void displaySeatMap(const std::vector<std::vector<bool>>& seats);
+std::string toUpper(const std::string& s);
+bool isValidSeatCode(const std::string& code);
+std::pair<int, int> decodeSeat(const std::string& code);
+void bookTicket(std::vector<Cinema>& cinemas, std::vector<Booking>& bookings);
+void supportPage();
 
 void displayLogo() {
     std::cout << R"(
-  ____ ___ _   _ _____ ___ __  __    _    ____  
- / ___|_ _| \ | |_   _|_ _|  \/  |  / \  |  _ \ 
-| |    | ||  \| | | |  | || |\/| | / _ \ | | | |
-| |___ | || |\  | | |  | || |  | |/ ___ \| |_| |
- \____|___|_| \_| |_| |___|_|  |_/_/   \_\____/ 
+   ____ ___ _  _ _____ ___ __  __    _    ____
+  / ___|_ _| \ | |_  _|_ _|  \/  |  / \  |  _ \
+ | |    | ||  \| | | |  | || |\/| | / _ \ | | | |
+ | |___ | || |\  | | |  | || |  | |/ ___ \| |_| |
+  \____|___|_| \_| |_| |___|_|  |_/_/   \_\____/
     )" << "\n";
+}
+
+void displaySeatMap(const std::vector<std::vector<bool>>& seats) {
+    std::cout << "\n    ";
+    for (char c = 'A'; c < 'A' + 10; ++c) std::cout << " " << c;
+    std::cout << "\n";
+
+    for (size_t row = 0; row < 10; ++row) { 
+        if (row + 1 < 10) std::cout << " " << row + 1 << " ";
+        else std::cout << row + 1 << " ";
+        for (size_t col = 0; col < 10; ++col) { 
+            std::cout << (seats[row][col] ? " X" : " _");
+        }
+        std::cout << "\n";
+    }
+}
+
+std::string toUpper(const std::string& s) {
+    std::string result = s;
+    for (char& c : result) c = static_cast<char>(toupper(static_cast<unsigned char>(c)));
+    return result;
+}
+
+bool isValidSeatCode(const std::string& code) {
+    if (code.length() < 2 || code.length() > 3) return false;
+    try {
+        size_t lastCharPos = code.length() - 1;
+        int row = std::stoi(code.substr(0, lastCharPos));
+        char col = toupper(static_cast<unsigned char>(code.back()));
+        return row >= 1 && row <= 10 && col >= 'A' && col <= 'J';
+    }
+    catch (...) {
+        return false;
+    }
+}
+
+std::pair<int, int> decodeSeat(const std::string& code) {
+    size_t lastCharPos = code.length() - 1;
+    int row = std::stoi(code.substr(0, lastCharPos)) - 1;
+    int col = toupper(static_cast<unsigned char>(code.back())) - 'A';
+    return { row, col };
 }
 
 void bookTicket(std::vector<Cinema>& cinemas, std::vector<Booking>& bookings) {
     clearScreen();
     displayCinemas(cinemas);
-    int cinemaChoice = getValidInput(cinemas.size());
-    Cinema selectedCinema = cinemas[cinemaChoice - 1];
+    int cinemaChoice = getValidInput(static_cast<int>(cinemas.size()));
+    Cinema& selectedCinema = cinemas[static_cast<size_t>(cinemaChoice) - 1];
 
     clearScreen();
     displayMovies(selectedCinema);
-    int movieChoice = getValidInput(selectedCinema.movies.size());
-    Movie selectedMovie = selectedCinema.movies[movieChoice - 1];
+    int movieChoice = getValidInput(static_cast<int>(selectedCinema.movies.size()));
+    Movie& selectedMovie = selectedCinema.movies[static_cast<size_t>(movieChoice) - 1];
 
     clearScreen();
     displayShowtimes(selectedMovie);
-    int showtimeChoice = getValidInput(selectedMovie.showtimes.size());
-    std::string selectedShowtime = selectedMovie.showtimes[showtimeChoice - 1];
+    int showtimeChoice = getValidInput(static_cast<int>(selectedMovie.showtimes.size()));
+    std::string selectedShowtime = selectedMovie.showtimes[static_cast<size_t>(showtimeChoice) - 1];
+
+    std::vector<std::vector<bool>>& seats = selectedMovie.seatMaps[selectedShowtime];
 
     std::cout << "\nEnter number of tickets: ";
     int tickets;
     std::cin >> tickets;
     clearInputBuffer();
+
+    std::vector<std::string> selectedSeats;
+
+    for (int i = 0; i < tickets; ++i) {
+        while (true) {
+            clearScreen();
+            std::cout << "\nSelect seat for ticket #" << (i + 1) << ":\n";
+            displaySeatMap(seats);
+            std::cout << "Enter seat (e.g., 3C): ";
+            std::string seatCode;
+            std::getline(std::cin, seatCode);
+            seatCode = toUpper(seatCode);
+
+            if (!isValidSeatCode(seatCode)) {
+                std::cout << "Invalid format. Try again.\n";
+                std::cin.get();
+                continue;
+            }
+
+            std::pair<int, int> seatPos = decodeSeat(seatCode);
+            int row = seatPos.first;
+            int col = seatPos.second;
+
+            // Ensure row and col are within bounds before accessing
+            if (row < 0 || row >= 10 || col < 0 || col >= 10) {
+                std::cout << "Seat out of bounds. Try again.\n";
+                std::cin.get();
+                continue;
+            }
+
+            if (seats[static_cast<size_t>(row)][static_cast<size_t>(col)]) { // Cast to size_t
+                std::cout << "Seat already taken. Choose another.\n";
+                std::cin.get();
+                continue;
+            }
+
+            seats[static_cast<size_t>(row)][static_cast<size_t>(col)] = true; // Cast to size_t
+            selectedSeats.push_back(seatCode);
+            break;
+        }
+    }
 
     double totalPrice = tickets * selectedMovie.price;
 
@@ -43,7 +139,8 @@ void bookTicket(std::vector<Cinema>& cinemas, std::vector<Booking>& bookings) {
         selectedMovie.title,
         selectedShowtime,
         tickets,
-        totalPrice
+        totalPrice,
+        selectedSeats
     };
 
     clearScreen();
@@ -69,32 +166,44 @@ void supportPage() {
 
 int main() {
     std::vector<Cinema> cinemas = {
-        // your existing cinemas...
-        {"CineGrand Burgas", "Mall Galleria", {
-            {"Avatar: The Way of Water", "Sci-Fi", "James Cameron", 192,
-             {"10:00", "14:30", "19:00"}, 12.50, 12},
-            {"Titanic", "Romance", "James Cameron", 195,
-             {"11:00", "15:30"}, 8.50, 12},
-            {"Paw Patrol: The Mighty Movie", "Animation", "Cal Brunker", 88,
-             {"09:30", "12:00", "14:15"}, 7.00, 0}
-        }},
-        {"CineMax Varna", "Mall Varna", {
-            {"The Batman", "Action", "Matt Reeves", 176,
-             {"10:30", "14:00", "18:30", "22:00"}, 11.00, 15},
-            {"Inception", "Sci-Fi", "Christopher Nolan", 148,
-             {"13:00", "16:30", "20:00"}, 9.50, 12},
-            {"Barbie", "Comedy", "Greta Gerwig", 114,
-             {"11:30", "14:45", "17:30"}, 10.50, 12}
-        }},
-        {"Cineplex Sofia", "The Paradise Center", {
-            {"Frozen II", "Animation", "Chris Buck", 103,
-             {"10:00", "12:30", "15:00"}, 8.00, 0},
-            {"Joker", "Drama", "Todd Phillips", 122,
-             {"13:30", "16:45", "20:15"}, 10.00, 18},
-            {"Oppenheimer", "Biography", "Christopher Nolan", 180,
-             {"11:00", "15:00", "19:30"}, 12.00, 16}
-        }}
+        Cinema("CineGrand Burgas", "Mall Galleria", {
+            Movie("Avatar: The Way of Water", "Sci-Fi", "James Cameron", 192,
+                 {"10:00", "14:30", "19:00"}, 12.50, 12),
+            Movie("Titanic", "Romance", "James Cameron", 195,
+                 {"11:00", "15:30"}, 8.50, 12),
+            Movie("Paw Patrol: The Mighty Movie", "Animation", "Cal Brunker", 88,
+                 {"09:30", "12:00", "14:15"}, 7.00, 0)
+        }),
+        Cinema("CineMax Varna", "Mall Varna", {
+            Movie("The Batman", "Action", "Matt Reeves", 176,
+                 {"10:30", "14:00", "18:30", "22:00"}, 11.00, 15),
+            Movie("Inception", "Sci-Fi", "Christopher Nolan", 148,
+                 {"13:00", "16:30", "20:00"}, 9.50, 12),
+            Movie("Barbie", "Comedy", "Greta Gerwig", 114,
+                 {"11:30", "14:45", "17:30"}, 10.50, 12)
+        }),
+        Cinema("Cineplex Sofia", "The Paradise Center", {
+            Movie("Frozen II", "Animation", "Chris Buck", 103,
+                 {"10:00", "12:30", "15:00"}, 8.00, 0),
+            Movie("Joker", "Drama", "Todd Phillips", 122,
+                 {"13:30", "16:45", "20:15"}, 10.00, 18),
+            Movie("Oppenheimer", "Biography", "Christopher Nolan", 180,
+                 {"11:00", "15:00", "19:30"}, 12.00, 16)
+        })
     };
+    /*
+    for (auto& cinema : cinemas) {
+        for (auto& movie : cinema.movies) {
+            for (const auto& time : movie.showtimes) {
+                // Ensure the map key exists before accessing
+                if (movie.seatMaps.find(time) == movie.seatMaps.end()) {
+                    movie.seatMaps[time] = std::vector<std::vector<bool>>(10, std::vector<bool>(10, false));
+                }
+            }
+        }
+    }
+    */
+
 
     std::vector<Booking> bookings;
 
