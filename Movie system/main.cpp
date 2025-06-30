@@ -9,8 +9,8 @@ std::pair<int, int> decodeSeat(const std::string& code);
 
 void bookTicket(std::vector<Cinema>& cinemas);
 void cancelBooking(std::vector<Cinema>& cinemas);
-void displayMyBookings(); // Declaration
-void supportPage();      // Declaration
+void displayMyBookings();
+void supportPage();
 
 void displayLogo() {
     std::cout << R"(
@@ -412,5 +412,4 @@ int main() {
 
     clearScreen();
     std::cout << "\nThank you for using CINEMA Booking System!\n";
-    return 0;
 }
