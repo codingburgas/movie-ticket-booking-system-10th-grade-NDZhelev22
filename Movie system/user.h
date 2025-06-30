@@ -9,14 +9,15 @@ class User {
 public:
     std::string username;
     std::string hashedPassword;
+    int loyaltyPoints;
 
     std::vector<Booking> userBookings;
 
     User(std::string username, std::string hashedPassword)
-        : username(std::move(username)), hashedPassword(std::move(hashedPassword)) {
+        : username(std::move(username)), hashedPassword(std::move(hashedPassword)), loyaltyPoints(0) {
     }
 
-    User() {}
+    User() : loyaltyPoints(0) {}
 };
 
 #endif

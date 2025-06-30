@@ -11,6 +11,7 @@ void bookTicket(std::vector<Cinema>& cinemas);
 void cancelBooking(std::vector<Cinema>& cinemas);
 void displayMyBookings();
 void supportPage();
+void displayUserProfile(); // New: Declaration for the user profile display function
 
 void displayLogo() {
     std::cout << R"(
@@ -159,7 +160,23 @@ void bookTicket(std::vector<Cinema>& cinemas) {
         std::cout << selectedSeats[i] << (i == selectedSeats.size() - 1 ? "" : ", ");
     }
     std::cout << "\nTotal amount: $" << std::fixed << std::setprecision(2) << totalPrice << "\n";
+    std::cout << "Your current loyalty points: " << currentLoggedInUser.loyaltyPoints << "\n";
     std::cout << "-----------------------\n";
+
+    // Loyalty points redemption
+    if (currentLoggedInUser.loyaltyPoints >= 100) { // Example: 100 points for a discount
+        std::cout << "\nWould you like to redeem 100 loyalty points for a $5 discount? (Y/N): ";
+        std::string redeemChoice;
+        std::getline(std::cin, redeemChoice);
+        redeemChoice = toUpper(redeemChoice);
+
+        if (redeemChoice == "Y") {
+            totalPrice -= 5.00; // Apply discount
+            currentLoggedInUser.loyaltyPoints -= 100; // Deduct points
+            std::cout << "Discount applied! New total: $" << std::fixed << std::setprecision(2) << totalPrice << "\n";
+            std::cout << "Remaining loyalty points: " << currentLoggedInUser.loyaltyPoints << "\n";
+        }
+    }
 
     std::cout << "\nSelect payment method:\n";
     std::cout << "1. Online with card\n";
@@ -191,7 +208,9 @@ void bookTicket(std::vector<Cinema>& cinemas) {
 
     if (paymentSuccessful) {
         std::cout << "Payment successful!\n";
-        notifyUser("New booking confirmed for " + currentLoggedInUser.username + " for movie '" + selectedMovie.title + "'.");
+        // Award loyalty points (e.g., 1 point per $1 spent)
+        currentLoggedInUser.loyaltyPoints += static_cast<int>(totalPrice);
+        notifyUser("New booking confirmed for " + currentLoggedInUser.username + " for movie '" + selectedMovie.title + "'. You earned " + std::to_string(static_cast<int>(totalPrice)) + " loyalty points!");
 
         Booking newBooking = {
             currentLoggedInUser.username,
@@ -205,11 +224,23 @@ void bookTicket(std::vector<Cinema>& cinemas) {
 
         currentLoggedInUser.userBookings.push_back(newBooking);
         saveUserBookings(currentLoggedInUser.username, currentLoggedInUser.userBookings);
+        // Save all users to update loyalty points
+        std::vector<User> allUsers;
+        loadUsers(allUsers); // Reload all users to find and update the current user's points
+        for (auto& user : allUsers) {
+            if (user.username == currentLoggedInUser.username) {
+                user.loyaltyPoints = currentLoggedInUser.loyaltyPoints;
+                break;
+            }
+        }
+        saveUsers(allUsers); // Save all users with updated points
+
         saveSeatMaps(cinemas);
 
         clearScreen();
         displayBookingConfirmation(newBooking);
         std::cout << "\nYour booking has been successfully recorded!\n";
+        std::cout << "Current loyalty points: " << currentLoggedInUser.loyaltyPoints << "\n";
 
     }
     else {
@@ -335,6 +366,27 @@ void supportPage() {
     clearScreen();
 }
 
+// New: Function to display user profile statistics
+void displayUserProfile() {
+    clearScreen();
+    if (currentLoggedInUser.username.empty()) {
+        std::cout << "\nPlease log in to view your profile.\n";
+        std::cout << "\nPress Enter to return to the main menu...";
+        std::cin.get();
+        clearScreen();
+        return;
+    }
+
+    std::cout << "\n=== User Profile: " << currentLoggedInUser.username << " ===\n";
+    std::cout << "Loyalty Points: " << currentLoggedInUser.loyaltyPoints << "\n";
+    std::cout << "Total Bookings Made: " << currentLoggedInUser.userBookings.size() << "\n";
+    // Add more statistics here if desired, e.g., total money spent, favorite genre, etc.
+    std::cout << "-----------------------------------\n";
+    std::cout << "\nPress Enter to return to the main menu...";
+    std::cin.get();
+    clearScreen();
+}
+
 
 int main() {
     std::vector<Cinema> cinemas = {
@@ -408,10 +460,11 @@ int main() {
             std::cout << "1. Book a Ticket\n";
             std::cout << "2. My Bookings\n";
             std::cout << "3. Cancel Booking\n";
-            std::cout << "4. Support / File a Complaint\n";
-            std::cout << "5. Logout\n";
-            std::cout << "6. Exit System\n\n";
-            int choice = getValidInput(6);
+            std::cout << "4. User Profile\n"; // New: User Profile option
+            std::cout << "5. Support / File a Complaint\n";
+            std::cout << "6. Logout\n";
+            std::cout << "7. Exit System\n\n"; // Max choice updated to 7
+            int choice = getValidInput(7);
 
             if (choice == 1) {
                 bookTicket(cinemas);
@@ -423,13 +476,26 @@ int main() {
                 cancelBooking(cinemas);
             }
             else if (choice == 4) {
-                supportPage();
+                displayUserProfile();
             }
             else if (choice == 5) {
-                logoutUser();
+                supportPage();
             }
             else if (choice == 6) {
+                logoutUser();
+            }
+            else if (choice == 7) {
                 saveSeatMaps(cinemas);
+                std::vector<User> tempUsers;
+                loadUsers(tempUsers);
+                for (auto& user : tempUsers) {
+                    if (user.username == currentLoggedInUser.username) {
+                        user.loyaltyPoints = currentLoggedInUser.loyaltyPoints;
+                        break;
+                    }
+                }
+                saveUsers(tempUsers);
+
                 if (!currentLoggedInUser.username.empty()) {
                     saveUserBookings(currentLoggedInUser.username, currentLoggedInUser.userBookings);
                 }

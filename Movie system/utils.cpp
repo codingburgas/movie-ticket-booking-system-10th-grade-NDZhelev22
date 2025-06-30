@@ -54,9 +54,14 @@ void loadUsers(std::vector<User>& users) {
         std::string line;
         while (std::getline(file, line)) {
             std::stringstream ss(line);
-            std::string username, hashedPassword;
-            if (std::getline(ss, username, '|') && std::getline(ss, hashedPassword)) {
-                users.emplace_back(username, hashedPassword);
+            std::string username, hashedPassword, loyaltyPointsStr;
+            // Updated parsing to include loyaltyPoints
+            if (std::getline(ss, username, '|') &&
+                std::getline(ss, hashedPassword, '|') &&
+                std::getline(ss, loyaltyPointsStr)) {
+                User newUser(username, hashedPassword);
+                newUser.loyaltyPoints = std::stoi(loyaltyPointsStr);
+                users.push_back(newUser);
             }
         }
         file.close();
@@ -67,7 +72,8 @@ void saveUsers(const std::vector<User>& users) {
     std::ofstream file(USERS_FILE);
     if (file.is_open()) {
         for (const auto& user : users) {
-            file << user.username << "|" << user.hashedPassword << "\n";
+            // Updated saving to include loyaltyPoints
+            file << user.username << "|" << user.hashedPassword << "|" << user.loyaltyPoints << "\n";
         }
         file.close();
     }
@@ -166,7 +172,6 @@ void notifyUser(const std::string& message) {
     std::cout << "-------------------------------------\n";
 }
 
-// Saves the current state of all seat maps to a file.
 void saveSeatMaps(const std::vector<Cinema>& cinemas) {
     std::ofstream file(SEAT_DATA_FILE, std::ios::trunc);
     if (!file.is_open()) {
@@ -193,12 +198,9 @@ void saveSeatMaps(const std::vector<Cinema>& cinemas) {
     file.close();
 }
 
-// Loads seat map data from a file and applies it to the in-memory cinema data.
 void loadSeatMaps(std::vector<Cinema>& cinemas) {
     std::ifstream file(SEAT_DATA_FILE);
     if (!file.is_open()) {
-        // If file doesn't exist or can't be opened, it means no saved data,
-        // so the default seat maps (all false) will be used.
         return;
     }
 
@@ -212,7 +214,6 @@ void loadSeatMaps(std::vector<Cinema>& cinemas) {
             std::getline(ss, showtime, '|') &&
             std::getline(ss, seatMapString))
         {
-            // Find the corresponding movie and showtime in the in-memory data
             for (auto& cinema : cinemas) {
                 if (cinema.name == cinemaName) {
                     for (auto& movie : cinema.movies) {
@@ -229,10 +230,10 @@ void loadSeatMaps(std::vector<Cinema>& cinemas) {
                                     }
                                 }
                             }
-                            break; // Movie found
+                            break;
                         }
                     }
-                    break; // Cinema found
+                    break;
                 }
             }
         }
