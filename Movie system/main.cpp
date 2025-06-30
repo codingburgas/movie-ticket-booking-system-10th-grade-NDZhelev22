@@ -161,13 +161,35 @@ void bookTicket(std::vector<Cinema>& cinemas) {
     std::cout << "\nTotal amount: $" << std::fixed << std::setprecision(2) << totalPrice << "\n";
     std::cout << "-----------------------\n";
 
-    std::cout << "\nProceed with payment? (Y/N): ";
-    std::string paymentConfirm;
-    std::getline(std::cin, paymentConfirm);
-    paymentConfirm = toUpper(paymentConfirm);
+    std::cout << "\nSelect payment method:\n";
+    std::cout << "1. Online with card\n";
+    std::cout << "2. On-site with ticket agent\n";
+    int paymentMethodChoice = getValidInput(2);
 
-    if (paymentConfirm == "Y") {
-        std::cout << "\nProcessing payment...\n";
+    bool paymentSuccessful = false;
+    if (paymentMethodChoice == 1) {
+        std::string cardNumber;
+        while (true) {
+            std::cout << "Enter 12-digit card number: ";
+            std::getline(std::cin, cardNumber);
+            if (cardNumber.length() == 12 && std::all_of(cardNumber.begin(), cardNumber.end(), ::isdigit)) {
+                std::cout << "\nProcessing card payment...\n";
+                paymentSuccessful = true;
+                break;
+            }
+            else {
+                std::cout << "Invalid card number. Please enter 12 digits.\n";
+            }
+        }
+    }
+    else if (paymentMethodChoice == 2) {
+        std::cout << "\nPlease pay $" << std::fixed << std::setprecision(2) << totalPrice << " to the ticket agent.\n";
+        std::cout << "Press Enter once payment is made: ";
+        std::cin.get();
+        paymentSuccessful = true;
+    }
+
+    if (paymentSuccessful) {
         std::cout << "Payment successful!\n";
         notifyUser("New booking confirmed for " + currentLoggedInUser.username + " for movie '" + selectedMovie.title + "'.");
 
@@ -183,6 +205,7 @@ void bookTicket(std::vector<Cinema>& cinemas) {
 
         currentLoggedInUser.userBookings.push_back(newBooking);
         saveUserBookings(currentLoggedInUser.username, currentLoggedInUser.userBookings);
+        saveSeatMaps(cinemas);
 
         clearScreen();
         displayBookingConfirmation(newBooking);
@@ -265,6 +288,7 @@ void cancelBooking(std::vector<Cinema>& cinemas) {
 
     currentLoggedInUser.userBookings.erase(currentLoggedInUser.userBookings.begin() + (bookingChoice - 1));
     saveUserBookings(currentLoggedInUser.username, currentLoggedInUser.userBookings);
+    saveSeatMaps(cinemas);
 
     notifyUser("Booking for movie '" + bookingToCancel.movie + "' at " + bookingToCancel.showtime + " has been canceled.");
     std::cout << "\nBooking successfully canceled!\n";
@@ -352,13 +376,15 @@ int main() {
         })
     };
 
+    loadSeatMaps(cinemas);
+
     std::vector<User> allUsers;
     loadUsers(allUsers);
 
     while (true) {
         clearScreen();
         displayLogo();
-        std::cout << "\nWelcome to CINEMA Booking System!\n\n";
+        std::cout << "\nWelcome to the CINEMA Booking System!\n\n";
 
         if (currentLoggedInUser.username.empty()) {
             std::cout << "1. Register\n";
@@ -373,6 +399,7 @@ int main() {
                 loginUser(allUsers);
             }
             else if (choice == 3) {
+                saveSeatMaps(cinemas);
                 break;
             }
         }
@@ -383,7 +410,7 @@ int main() {
             std::cout << "3. Cancel Booking\n";
             std::cout << "4. Support / File a Complaint\n";
             std::cout << "5. Logout\n";
-            std::cout << "6. Exit\n\n";
+            std::cout << "6. Exit System\n\n";
             int choice = getValidInput(6);
 
             if (choice == 1) {
@@ -402,6 +429,7 @@ int main() {
                 logoutUser();
             }
             else if (choice == 6) {
+                saveSeatMaps(cinemas);
                 if (!currentLoggedInUser.username.empty()) {
                     saveUserBookings(currentLoggedInUser.username, currentLoggedInUser.userBookings);
                 }
@@ -411,5 +439,5 @@ int main() {
     }
 
     clearScreen();
-    std::cout << "\nThank you for using CINEMA Booking System!\n";
+    std::cout << "\nThank you for using the CINEMA Booking System!\n";
 }

@@ -43,6 +43,8 @@ std::string simpleHash(const std::string& input) {
 }
 
 const std::string USERS_FILE = "users.txt";
+const std::string SEAT_DATA_FILE = "seat_data.txt";
+
 
 void loadUsers(std::vector<User>& users) {
     users.clear();
@@ -70,7 +72,7 @@ void saveUsers(const std::vector<User>& users) {
         file.close();
     }
     else {
-        std::cerr << "Error: Could not open users file for writing.\n";
+        std::cout << "Error: Could not open users file for writing.\n";
     }
 }
 
@@ -146,14 +148,13 @@ void saveUserBookings(const std::string& username, const std::vector<Booking>& u
         file.close();
     }
     else {
-        std::cerr << "Error: Could not open booking file for " << username << " for writing.\n";
+        std::cout << "Error: Could not open booking file for " << username << " for writing.\n";
     }
 }
 
 void notifyUser(const std::string& message) {
     auto now = std::chrono::system_clock::now();
     std::time_t currentTime = std::chrono::system_clock::to_time_t(now);
-    // Use localtime_s for safer handling on Visual Studio
     std::tm localTimeStruct;
     if (localtime_s(&localTimeStruct, &currentTime) == 0) {
         std::cout << "\n--- Notification [" << std::put_time(&localTimeStruct, "%Y-%m-%d %H:%M:%S") << "] ---\n";
@@ -163,4 +164,78 @@ void notifyUser(const std::string& message) {
     }
     std::cout << message << "\n";
     std::cout << "-------------------------------------\n";
+}
+
+// Saves the current state of all seat maps to a file.
+void saveSeatMaps(const std::vector<Cinema>& cinemas) {
+    std::ofstream file(SEAT_DATA_FILE, std::ios::trunc);
+    if (!file.is_open()) {
+        std::cout << "Error: Could not open seat data file for writing.\n";
+        return;
+    }
+
+    for (const auto& cinema : cinemas) {
+        for (const auto& movie : cinema.movies) {
+            for (const auto& showtimePair : movie.seatMaps) {
+                const std::string& showtime = showtimePair.first;
+                const std::vector<std::vector<bool>>& seats = showtimePair.second;
+
+                std::string seatMapString;
+                for (const auto& row : seats) {
+                    for (bool seatStatus : row) {
+                        seatMapString += (seatStatus ? '1' : '0');
+                    }
+                }
+                file << cinema.name << "|" << movie.title << "|" << showtime << "|" << seatMapString << "\n";
+            }
+        }
+    }
+    file.close();
+}
+
+// Loads seat map data from a file and applies it to the in-memory cinema data.
+void loadSeatMaps(std::vector<Cinema>& cinemas) {
+    std::ifstream file(SEAT_DATA_FILE);
+    if (!file.is_open()) {
+        // If file doesn't exist or can't be opened, it means no saved data,
+        // so the default seat maps (all false) will be used.
+        return;
+    }
+
+    std::string line;
+    while (std::getline(file, line)) {
+        std::stringstream ss(line);
+        std::string cinemaName, movieTitle, showtime, seatMapString;
+
+        if (std::getline(ss, cinemaName, '|') &&
+            std::getline(ss, movieTitle, '|') &&
+            std::getline(ss, showtime, '|') &&
+            std::getline(ss, seatMapString))
+        {
+            // Find the corresponding movie and showtime in the in-memory data
+            for (auto& cinema : cinemas) {
+                if (cinema.name == cinemaName) {
+                    for (auto& movie : cinema.movies) {
+                        if (movie.title == movieTitle) {
+                            if (movie.seatMaps.count(showtime)) {
+                                std::vector<std::vector<bool>>& seats = movie.seatMaps[showtime];
+                                int charIndex = 0;
+                                for (size_t r = 0; r < 10; ++r) {
+                                    for (size_t c = 0; c < 10; ++c) {
+                                        if (charIndex < seatMapString.length()) {
+                                            seats[r][c] = (seatMapString[charIndex] == '1');
+                                            charIndex++;
+                                        }
+                                    }
+                                }
+                            }
+                            break; // Movie found
+                        }
+                    }
+                    break; // Cinema found
+                }
+            }
+        }
+    }
+    file.close();
 }

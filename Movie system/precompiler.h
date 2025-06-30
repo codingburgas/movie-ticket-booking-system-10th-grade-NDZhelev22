@@ -12,8 +12,8 @@
 #include <sstream>
 #include <iomanip>
 #include <algorithm>
-#include <chrono> // For std::chrono::system_clock and std::chrono::duration_cast
-#include <ctime>  // For std::time_t, std::localtime, std::put_time
+#include <chrono>
+#include <ctime>
 
 #include "booking.h"
 #include "movie.h"

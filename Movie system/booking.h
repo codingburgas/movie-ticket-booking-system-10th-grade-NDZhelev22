@@ -1,7 +1,8 @@
 #ifndef BOOKING_H
 #define BOOKING_H
 
-struct Booking {
+class Booking {
+public:
     std::string userId;
     std::string cinema;
     std::string movie;
