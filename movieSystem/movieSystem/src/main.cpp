@@ -1,21 +1,25 @@
 #include "../include/precompiler.h"
 
+// Global variable to store the currently logged-in user's data.
 User currentLoggedInUser;
 
+// Function prototypes for displaying UI elements and handling seat logic.
 void displayLogo();
 void displaySeatMap(const std::vector<std::vector<bool>>& seats);
 bool isValidSeatCode(const std::string& code);
 std::pair<int, int> decodeSeat(const std::string& code);
 
+// Function prototypes for core application functionalities.
 void bookTicket(std::vector<Cinema>& cinemas);
 void cancelBooking(std::vector<Cinema>& cinemas);
 void displayMyBookings();
 void supportPage();
 void displayUserProfile();
 
+// Displays the ASCII art logo for the application.
 void displayLogo() {
     std::cout << R"(
-   ____ ___ _  _ _____  ___ __  __    _    ____
+    ____ ___ _  _ _____  ___ __  __    _    ____
   / ___|_ _| \ | |_  _||_ _|  \/  |  / \  |  _ \
  | |    | ||  \| | | |  | || |\/| | / _ \ | | | |
  | |___ | || |\  | | |  | || |  | |/ ___ \| |_| |
@@ -23,6 +27,7 @@ void displayLogo() {
     )" << "\n";
 }
 
+// Renders the visual representation of a cinema's seating arrangement.
 void displaySeatMap(const std::vector<std::vector<bool>>& seats) {
     std::cout << "\n    ";
     for (char c = 'A'; c < 'A' + 10; ++c) std::cout << " " << c;
@@ -38,6 +43,7 @@ void displaySeatMap(const std::vector<std::vector<bool>>& seats) {
     }
 }
 
+// Validates the format and range of a user-entered seat code (e.g., "3C").
 bool isValidSeatCode(const std::string& code) {
     if (code.length() < 2 || code.length() > 3) return false;
     try {
@@ -51,6 +57,7 @@ bool isValidSeatCode(const std::string& code) {
     }
 }
 
+// Converts a seat code (e.g., "3C") into numerical row and column indices.
 std::pair<int, int> decodeSeat(const std::string& code) {
     size_t lastCharPos = code.length() - 1;
     int row = std::stoi(code.substr(0, lastCharPos)) - 1;
@@ -58,6 +65,7 @@ std::pair<int, int> decodeSeat(const std::string& code) {
     return { row, col };
 }
 
+// Handles the process of selecting a movie, showtime, and seats, then finalizing a booking.
 void bookTicket(std::vector<Cinema>& cinemas) {
     if (currentLoggedInUser.username.empty()) {
         std::cout << "\nPlease log in to book tickets.\n";
@@ -163,7 +171,7 @@ void bookTicket(std::vector<Cinema>& cinemas) {
     std::cout << "Your current loyalty points: " << currentLoggedInUser.loyaltyPoints << "\n";
     std::cout << "-----------------------\n";
 
-    if (currentLoggedInUser.loyaltyPoints >= 100) { 
+    if (currentLoggedInUser.loyaltyPoints >= 100) {
         std::cout << "\nWould you like to redeem 100 loyalty points for a $5 discount? (Y/N): ";
         std::string redeemChoice;
         std::getline(std::cin, redeemChoice);
@@ -210,6 +218,7 @@ void bookTicket(std::vector<Cinema>& cinemas) {
         currentLoggedInUser.loyaltyPoints += static_cast<int>(totalPrice);
         notifyUser("New booking confirmed for " + currentLoggedInUser.username + " for movie '" + selectedMovie.title + "'. You earned " + std::to_string(static_cast<int>(totalPrice)) + " loyalty points!");
 
+        // Represents a completed reservation for a user.
         Booking newBooking = {
             currentLoggedInUser.username,
             selectedCinema.name,
@@ -242,6 +251,7 @@ void bookTicket(std::vector<Cinema>& cinemas) {
     }
     else {
         std::cout << "\nPayment canceled. Booking not completed.\n";
+        // Reverts the seat status in the seat map if the payment fails.
         for (const auto& pos : selectedSeatPositions) {
             seats[static_cast<size_t>(pos.first)][static_cast<size_t>(pos.second)] = false;
         }
@@ -253,6 +263,7 @@ void bookTicket(std::vector<Cinema>& cinemas) {
     clearScreen();
 }
 
+// Allows a logged-in user to view their existing bookings and cancel one.
 void cancelBooking(std::vector<Cinema>& cinemas) {
     clearScreen();
     if (currentLoggedInUser.username.empty()) {
@@ -326,6 +337,7 @@ void cancelBooking(std::vector<Cinema>& cinemas) {
 }
 
 
+// Displays all bookings associated with the currently logged-in user.
 void displayMyBookings() {
     clearScreen();
     if (currentLoggedInUser.username.empty()) {
@@ -351,6 +363,7 @@ void displayMyBookings() {
     clearScreen();
 }
 
+// Provides a functionality for users to submit complaints or feedback.
 void supportPage() {
     clearScreen();
     std::string complaint;
@@ -363,6 +376,7 @@ void supportPage() {
     clearScreen();
 }
 
+// Shows the profile details of the logged-in user, including loyalty points and total bookings.
 void displayUserProfile() {
     clearScreen();
     if (currentLoggedInUser.username.empty()) {
@@ -383,43 +397,45 @@ void displayUserProfile() {
 }
 
 
+// The main entry point of the cinema booking system application.
 int main() {
+    // Initializes the system with predefined cinema and movie data.
     std::vector<Cinema> cinemas = {
         Cinema("CineGrand Burgas", "Mall Galleria", {
             Movie("Avatar: The Way of Water", "Sci-Fi", "James Cameron", 192,
-                 {"10:00", "14:30", "19:00", "22:30"}, 12.50, 12),
+                    {"10:00", "14:30", "19:00", "22:30"}, 12.50, 12),
             Movie("Titanic", "Romance", "James Cameron", 195,
-                 {"11:00", "15:30", "20:00"}, 8.50, 12),
+                    {"11:00", "15:30", "20:00"}, 8.50, 12),
             Movie("Paw Patrol: The Mighty Movie", "Animation", "Cal Brunker", 88,
-                 {"09:30", "12:00", "14:15", "16:30"}, 7.00, 0),
+                    {"09:30", "12:00", "14:15", "16:30"}, 7.00, 0),
             Movie("Dune: Part Two", "Sci-Fi", "Denis Villeneuve", 166,
-                 {"10:15", "13:45", "17:15", "20:45"}, 14.00, 12)
+                    {"10:15", "13:45", "17:15", "20:45"}, 14.00, 12)
         }),
         Cinema("CineMax Varna", "Mall Varna", {
             Movie("The Batman", "Action", "Matt Reeves", 176,
-                 {"10:30", "14:00", "18:30", "22:00"}, 11.00, 15),
+                    {"10:30", "14:00", "18:30", "22:00"}, 11.00, 15),
             Movie("Inception", "Sci-Fi", "Christopher Nolan", 148,
-                 {"13:00", "16:30", "20:00", "23:00"}, 9.50, 12),
+                    {"13:00", "16:30", "20:00", "23:00"}, 9.50, 12),
             Movie("Barbie", "Comedy", "Greta Gerwig", 114,
-                 {"11:30", "14:45", "17:30", "20:15"}, 10.50, 12),
+                    {"11:30", "14:45", "17:30", "20:15"}, 10.50, 12),
             Movie("Oppenheimer", "Biography", "Christopher Nolan", 180,
-                 {"11:00", "15:00", "19:30"}, 12.00, 16)
+                    {"11:00", "15:00", "19:30"}, 12.00, 16)
         }),
         Cinema("Cineplex Sofia", "The Paradise Center", {
             Movie("Frozen II", "Animation", "Chris Buck", 103,
-                 {"10:00", "12:30", "15:00", "17:30"}, 8.00, 0),
+                    {"10:00", "12:30", "15:00", "17:30"}, 8.00, 0),
             Movie("Joker", "Drama", "Todd Phillips", 122,
-                 {"13:30", "16:45", "20:15", "22:45"}, 10.00, 18),
+                    {"13:30", "16:45", "20:15", "22:45"}, 10.00, 18),
             Movie("Spider-Man: Across the Spider-Verse", "Animation", "Joaquim Dos Santos", 140,
-                 {"10:45", "13:30", "16:15", "19:00"}, 11.50, 6)
+                    {"10:45", "13:30", "16:15", "19:00"}, 11.50, 6)
         }),
         Cinema("Arena Plovdiv", "Mall Plovdiv", {
             Movie("Guardians of the Galaxy Vol. 3", "Sci-Fi", "James Gunn", 150,
-                 {"10:00", "13:00", "16:00", "19:00", "22:00"}, 13.00, 12),
+                    {"10:00", "13:00", "16:00", "19:00", "22:00"}, 13.00, 12),
             Movie("The Super Mario Bros. Movie", "Animation", "Aaron Horvath", 92,
-                 {"09:00", "11:00", "13:00", "15:00"}, 7.50, 0),
+                    {"09:00", "11:00", "13:00", "15:00"}, 7.50, 0),
             Movie("Mission: Impossible - Dead Reckoning Part One", "Action", "Christopher McQuarrie", 163,
-                 {"11:30", "15:00", "18:30", "21:45"}, 13.50, 12)
+                    {"11:30", "15:00", "18:30", "21:45"}, 13.50, 12)
         })
     };
 
@@ -428,12 +444,14 @@ int main() {
     std::vector<User> allUsers;
     loadUsers(allUsers);
 
+    // Main application loop, handling user authentication and menu navigation.
     while (true) {
         clearScreen();
         displayLogo();
         std::cout << "\nWelcome to the CINEMA Booking System!\n\n";
 
         if (currentLoggedInUser.username.empty()) {
+            // Displays options for unauthenticated users.
             std::cout << "1. Register\n";
             std::cout << "2. Login\n";
             std::cout << "3. Exit\n\n";
@@ -451,6 +469,7 @@ int main() {
             }
         }
         else {
+            // Displays options for authenticated users.
             std::cout << "Logged in as: " << currentLoggedInUser.username << "\n\n";
             std::cout << "1. Book a Ticket\n";
             std::cout << "2. My Bookings\n";

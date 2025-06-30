@@ -1,5 +1,6 @@
 #include "../include/precompiler.h"
 
+// Function definition
 void clearScreen() {
 #ifdef _WIN32
     system("cls");
@@ -8,16 +9,19 @@ void clearScreen() {
 #endif
 }
 
+// Function definition
 void clearInputBuffer() {
     std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
 }
 
+// Function with input validation loop
 int getValidInput(int maxChoice) {
     int choice;
     while (true) {
         std::cout << "Enter your choice (1-" << maxChoice << "): ";
         std::cin >> choice;
 
+        // Conditional check and error handling
         if (std::cin.fail() || choice < 1 || choice > maxChoice) {
             std::cout << "Invalid input. Please try again.\n";
             std::cin.clear();
@@ -30,6 +34,7 @@ int getValidInput(int maxChoice) {
     }
 }
 
+// Function using STL algorithm and lambda
 std::string toUpper(const std::string& s) {
     std::string result = s;
     std::transform(result.begin(), result.end(), result.begin(),
@@ -37,15 +42,17 @@ std::string toUpper(const std::string& s) {
     return result;
 }
 
+// Function using STL hash function object
 std::string simpleHash(const std::string& input) {
     std::hash<std::string> hasher;
     return std::to_string(hasher(input));
 }
 
+// Constant definition
 const std::string USERS_FILE = "../Databases/users.txt";
 const std::string SEAT_DATA_FILE = "../Databases/seat_data.txt";
 
-
+// Function for file input using fstream
 void loadUsers(std::vector<User>& users) {
     users.clear();
     std::ifstream file(USERS_FILE);
@@ -58,6 +65,7 @@ void loadUsers(std::vector<User>& users) {
             if (std::getline(ss, username, '|') &&
                 std::getline(ss, hashedPassword, '|') &&
                 std::getline(ss, loyaltyPointsStr)) {
+                // Constructor call
                 User newUser(username, hashedPassword);
                 newUser.loyaltyPoints = std::stoi(loyaltyPointsStr);
                 users.push_back(newUser);
@@ -67,6 +75,7 @@ void loadUsers(std::vector<User>& users) {
     }
 }
 
+// Function for file output using fstream
 void saveUsers(const std::vector<User>& users) {
     std::ofstream file(USERS_FILE);
     if (file.is_open()) {
@@ -80,6 +89,7 @@ void saveUsers(const std::vector<User>& users) {
     }
 }
 
+// Function for string manipulation and sanitizing
 std::string getUserBookingsFilename(const std::string& username) {
     std::string safeUsername = username;
     for (char& c : safeUsername) {
@@ -90,6 +100,7 @@ std::string getUserBookingsFilename(const std::string& username) {
     return "../Databases/bookings_" + safeUsername + ".txt";
 }
 
+// Function for file input using fstream
 void loadUserBookings(const std::string& username, std::vector<Booking>& userBookings) {
     userBookings.clear();
     std::string filename = getUserBookingsFilename(username);
@@ -109,6 +120,7 @@ void loadUserBookings(const std::string& username, std::vector<Booking>& userBoo
                 std::getline(ss, totalPriceStr, '|') &&
                 std::getline(ss, seatsStr))
             {
+                // Object instantiation
                 Booking b;
                 b.userId = userId;
                 b.cinema = cinemaName;
@@ -117,6 +129,7 @@ void loadUserBookings(const std::string& username, std::vector<Booking>& userBoo
                 b.tickets = std::stoi(ticketsStr);
                 b.totalPrice = std::stod(totalPriceStr);
 
+                // Nested loop for parsing string tokens
                 std::stringstream seatSs(seatsStr);
                 std::string seat;
                 while (std::getline(seatSs, seat, ',')) {
@@ -131,6 +144,7 @@ void loadUserBookings(const std::string& username, std::vector<Booking>& userBoo
     }
 }
 
+// Function for file output using fstream
 void saveUserBookings(const std::string& username, const std::vector<Booking>& userBookings) {
     std::string filename = getUserBookingsFilename(username);
     std::ofstream file(filename, std::ios::trunc);
@@ -156,6 +170,7 @@ void saveUserBookings(const std::string& username, const std::vector<Booking>& u
     }
 }
 
+// Function using chrono and iomanip for formatted timestamp output
 void notifyUser(const std::string& message) {
     auto now = std::chrono::system_clock::now();
     std::time_t currentTime = std::chrono::system_clock::to_time_t(now);
@@ -170,6 +185,7 @@ void notifyUser(const std::string& message) {
     std::cout << "-------------------------------------\n";
 }
 
+// Function for serializing nested containers to file
 void saveSeatMaps(const std::vector<Cinema>& cinemas) {
     std::ofstream file(SEAT_DATA_FILE, std::ios::trunc);
     if (!file.is_open()) {
@@ -196,6 +212,7 @@ void saveSeatMaps(const std::vector<Cinema>& cinemas) {
     file.close();
 }
 
+// Function for deserializing nested containers from file
 void loadSeatMaps(std::vector<Cinema>& cinemas) {
     std::ifstream file(SEAT_DATA_FILE);
     if (!file.is_open()) {
