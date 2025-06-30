@@ -20,7 +20,6 @@ void saveUserBookings(const std::string& username, const std::vector<Booking>& u
 
 void notifyUser(const std::string& message);
 
-// New declarations for seat map persistence
 void saveSeatMaps(const std::vector<Cinema>& cinemas);
 void loadSeatMaps(std::vector<Cinema>& cinemas);
 

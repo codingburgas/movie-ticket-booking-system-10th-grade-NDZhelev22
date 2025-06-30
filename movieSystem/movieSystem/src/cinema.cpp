@@ -1,4 +1,4 @@
-#include "precompiler.h"
+#include "../include/precompiler.h"
 
 void displayCinemas(const std::vector<Cinema>& cinemas) {
     std::cout << "\n=== Available Cinemas ===\n";

@@ -1,4 +1,4 @@
-#include "precompiler.h"
+#include "../include/precompiler.h"
 
 void registerUser(std::vector<User>& users) {
     clearScreen();

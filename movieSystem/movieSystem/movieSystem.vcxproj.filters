@@ -18,45 +18,45 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="main.cpp">
+    <ClCompile Include="src\booking.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\cinema.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\login_system.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\movie.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\utils.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\main.cpp">
       <Filter>Main program</Filter>
-    </ClCompile>
-    <ClCompile Include="cinema.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="movie.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="booking.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="utils.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="login_system.cpp">
-      <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="cinema.h">
+    <ClInclude Include="include\booking.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="movie.h">
+    <ClInclude Include="include\cinema.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="booking.h">
+    <ClInclude Include="include\login_system.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="utils.h">
+    <ClInclude Include="include\movie.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="precompiler.h">
+    <ClInclude Include="include\precompiler.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="user.h">
+    <ClInclude Include="include\user.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="login_system.h">
+    <ClInclude Include="include\utils.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

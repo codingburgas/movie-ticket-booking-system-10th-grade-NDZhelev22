@@ -1,4 +1,4 @@
-#include "precompiler.h"
+#include "../include/precompiler.h"
 
 User currentLoggedInUser;
 
@@ -11,7 +11,7 @@ void bookTicket(std::vector<Cinema>& cinemas);
 void cancelBooking(std::vector<Cinema>& cinemas);
 void displayMyBookings();
 void supportPage();
-void displayUserProfile(); // New: Declaration for the user profile display function
+void displayUserProfile();
 
 void displayLogo() {
     std::cout << R"(
@@ -163,16 +163,15 @@ void bookTicket(std::vector<Cinema>& cinemas) {
     std::cout << "Your current loyalty points: " << currentLoggedInUser.loyaltyPoints << "\n";
     std::cout << "-----------------------\n";
 
-    // Loyalty points redemption
-    if (currentLoggedInUser.loyaltyPoints >= 100) { // Example: 100 points for a discount
+    if (currentLoggedInUser.loyaltyPoints >= 100) { 
         std::cout << "\nWould you like to redeem 100 loyalty points for a $5 discount? (Y/N): ";
         std::string redeemChoice;
         std::getline(std::cin, redeemChoice);
         redeemChoice = toUpper(redeemChoice);
 
         if (redeemChoice == "Y") {
-            totalPrice -= 5.00; // Apply discount
-            currentLoggedInUser.loyaltyPoints -= 100; // Deduct points
+            totalPrice -= 5.00;
+            currentLoggedInUser.loyaltyPoints -= 100;
             std::cout << "Discount applied! New total: $" << std::fixed << std::setprecision(2) << totalPrice << "\n";
             std::cout << "Remaining loyalty points: " << currentLoggedInUser.loyaltyPoints << "\n";
         }
@@ -208,7 +207,6 @@ void bookTicket(std::vector<Cinema>& cinemas) {
 
     if (paymentSuccessful) {
         std::cout << "Payment successful!\n";
-        // Award loyalty points (e.g., 1 point per $1 spent)
         currentLoggedInUser.loyaltyPoints += static_cast<int>(totalPrice);
         notifyUser("New booking confirmed for " + currentLoggedInUser.username + " for movie '" + selectedMovie.title + "'. You earned " + std::to_string(static_cast<int>(totalPrice)) + " loyalty points!");
 
@@ -224,16 +222,15 @@ void bookTicket(std::vector<Cinema>& cinemas) {
 
         currentLoggedInUser.userBookings.push_back(newBooking);
         saveUserBookings(currentLoggedInUser.username, currentLoggedInUser.userBookings);
-        // Save all users to update loyalty points
         std::vector<User> allUsers;
-        loadUsers(allUsers); // Reload all users to find and update the current user's points
+        loadUsers(allUsers);
         for (auto& user : allUsers) {
             if (user.username == currentLoggedInUser.username) {
                 user.loyaltyPoints = currentLoggedInUser.loyaltyPoints;
                 break;
             }
         }
-        saveUsers(allUsers); // Save all users with updated points
+        saveUsers(allUsers);
 
         saveSeatMaps(cinemas);
 
@@ -366,7 +363,6 @@ void supportPage() {
     clearScreen();
 }
 
-// New: Function to display user profile statistics
 void displayUserProfile() {
     clearScreen();
     if (currentLoggedInUser.username.empty()) {
@@ -380,7 +376,6 @@ void displayUserProfile() {
     std::cout << "\n=== User Profile: " << currentLoggedInUser.username << " ===\n";
     std::cout << "Loyalty Points: " << currentLoggedInUser.loyaltyPoints << "\n";
     std::cout << "Total Bookings Made: " << currentLoggedInUser.userBookings.size() << "\n";
-    // Add more statistics here if desired, e.g., total money spent, favorite genre, etc.
     std::cout << "-----------------------------------\n";
     std::cout << "\nPress Enter to return to the main menu...";
     std::cin.get();
@@ -460,10 +455,10 @@ int main() {
             std::cout << "1. Book a Ticket\n";
             std::cout << "2. My Bookings\n";
             std::cout << "3. Cancel Booking\n";
-            std::cout << "4. User Profile\n"; // New: User Profile option
+            std::cout << "4. User Profile\n";
             std::cout << "5. Support / File a Complaint\n";
             std::cout << "6. Logout\n";
-            std::cout << "7. Exit System\n\n"; // Max choice updated to 7
+            std::cout << "7. Exit System\n\n";
             int choice = getValidInput(7);
 
             if (choice == 1) {

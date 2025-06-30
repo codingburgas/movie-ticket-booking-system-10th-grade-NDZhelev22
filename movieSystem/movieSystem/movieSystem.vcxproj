@@ -127,21 +127,21 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="booking.cpp" />
-    <ClCompile Include="cinema.cpp" />
-    <ClCompile Include="login_system.cpp" />
-    <ClCompile Include="main.cpp" />
-    <ClCompile Include="movie.cpp" />
-    <ClCompile Include="utils.cpp" />
+    <ClCompile Include="src\booking.cpp" />
+    <ClCompile Include="src\cinema.cpp" />
+    <ClCompile Include="src\login_system.cpp" />
+    <ClCompile Include="src\main.cpp" />
+    <ClCompile Include="src\movie.cpp" />
+    <ClCompile Include="src\utils.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="booking.h" />
-    <ClInclude Include="cinema.h" />
-    <ClInclude Include="login_system.h" />
-    <ClInclude Include="movie.h" />
-    <ClInclude Include="precompiler.h" />
-    <ClInclude Include="user.h" />
-    <ClInclude Include="utils.h" />
+    <ClInclude Include="include\booking.h" />
+    <ClInclude Include="include\cinema.h" />
+    <ClInclude Include="include\login_system.h" />
+    <ClInclude Include="include\movie.h" />
+    <ClInclude Include="include\precompiler.h" />
+    <ClInclude Include="include\user.h" />
+    <ClInclude Include="include\utils.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

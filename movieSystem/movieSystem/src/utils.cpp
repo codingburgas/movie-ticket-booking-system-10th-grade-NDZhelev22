@@ -1,4 +1,4 @@
-#include "precompiler.h"
+#include "../include/precompiler.h"
 
 void clearScreen() {
 #ifdef _WIN32
@@ -42,8 +42,8 @@ std::string simpleHash(const std::string& input) {
     return std::to_string(hasher(input));
 }
 
-const std::string USERS_FILE = "users.txt";
-const std::string SEAT_DATA_FILE = "seat_data.txt";
+const std::string USERS_FILE = "../Databases/users.txt";
+const std::string SEAT_DATA_FILE = "../Databases/seat_data.txt";
 
 
 void loadUsers(std::vector<User>& users) {
@@ -55,7 +55,6 @@ void loadUsers(std::vector<User>& users) {
         while (std::getline(file, line)) {
             std::stringstream ss(line);
             std::string username, hashedPassword, loyaltyPointsStr;
-            // Updated parsing to include loyaltyPoints
             if (std::getline(ss, username, '|') &&
                 std::getline(ss, hashedPassword, '|') &&
                 std::getline(ss, loyaltyPointsStr)) {
@@ -72,7 +71,6 @@ void saveUsers(const std::vector<User>& users) {
     std::ofstream file(USERS_FILE);
     if (file.is_open()) {
         for (const auto& user : users) {
-            // Updated saving to include loyaltyPoints
             file << user.username << "|" << user.hashedPassword << "|" << user.loyaltyPoints << "\n";
         }
         file.close();
@@ -89,7 +87,7 @@ std::string getUserBookingsFilename(const std::string& username) {
             c = '_';
         }
     }
-    return "bookings_" + safeUsername + ".txt";
+    return "../Databases/bookings_" + safeUsername + ".txt";
 }
 
 void loadUserBookings(const std::string& username, std::vector<Booking>& userBookings) {

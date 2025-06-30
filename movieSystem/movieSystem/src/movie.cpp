@@ -1,4 +1,4 @@
-#include "precompiler.h"
+#include "../include/precompiler.h"
 
 void displayShowtimes(const Movie& movie) {
     std::cout << "\n=== Available showtimes for " << movie.title << " ===\n";
