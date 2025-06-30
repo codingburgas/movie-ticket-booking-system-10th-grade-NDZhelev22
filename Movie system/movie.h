@@ -1,10 +1,6 @@
 #ifndef MOVIE_H
 #define MOVIE_H
 
-#include <string>
-#include <vector>
-#include <map>
-
 class Movie {
 public:
     std::string title;
@@ -16,7 +12,6 @@ public:
     double price;
     int ageRestriction;
 
-    
     Movie(std::string title, std::string genre, std::string director, int duration,
         std::vector<std::string> showtimes, double price, int ageRestriction)
         : title(std::move(title)),
@@ -32,6 +27,7 @@ public:
         }
     }
 
+    Movie() : duration(0), price(0.0), ageRestriction(0) {}
 };
 
 void displayShowtimes(const Movie& movie);

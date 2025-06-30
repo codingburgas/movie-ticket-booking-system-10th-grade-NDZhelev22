@@ -129,6 +129,7 @@
   <ItemGroup>
     <ClCompile Include="booking.cpp" />
     <ClCompile Include="cinema.cpp" />
+    <ClCompile Include="login_system.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="movie.cpp" />
     <ClCompile Include="utils.cpp" />
@@ -136,8 +137,10 @@
   <ItemGroup>
     <ClInclude Include="booking.h" />
     <ClInclude Include="cinema.h" />
+    <ClInclude Include="login_system.h" />
     <ClInclude Include="movie.h" />
     <ClInclude Include="precompiler.h" />
+    <ClInclude Include="user.h" />
     <ClInclude Include="utils.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

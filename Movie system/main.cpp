@@ -1,26 +1,21 @@
-#include <iostream>
-#include <vector>
-#include <map>
-#include <string> // Added for std::string functions like toupper
-#include <cctype> // Added for toupper
-#include <utility> // Added for std::pair
-#include "cinema.h"
-#include "movie.h"
-#include "booking.h" // Assuming booking.h exists
-#include "utils.h"   // Assuming utils.h exists with clearScreen, clearInputBuffer, displayCinemas, displayMovies, displayShowtimes, displayBookingConfirmation, getValidInput
+#include "precompiler.h"
+
+// Definition of the global currentLoggedInUser object
+User currentLoggedInUser;
 
 void displayLogo();
 void displaySeatMap(const std::vector<std::vector<bool>>& seats);
-std::string toUpper(const std::string& s);
 bool isValidSeatCode(const std::string& code);
 std::pair<int, int> decodeSeat(const std::string& code);
-void bookTicket(std::vector<Cinema>& cinemas, std::vector<Booking>& bookings);
+
+void bookTicket(std::vector<Cinema>& cinemas);
+void displayMyBookings();
 void supportPage();
 
 void displayLogo() {
     std::cout << R"(
-   ____ ___ _  _ _____ ___ __  __    _    ____
-  / ___|_ _| \ | |_  _|_ _|  \/  |  / \  |  _ \
+   ____ ___ _  _ _____  ___ __  __    _    ____
+  / ___|_ _| \ | |_  _||_ _|  \/  |  / \  |  _ \
  | |    | ||  \| | | |  | || |\/| | / _ \ | | | |
  | |___ | || |\  | | |  | || |  | |/ ___ \| |_| |
   \____|___|_| \_| |_| |___|_|  |_/_/   \_\____/
@@ -32,20 +27,14 @@ void displaySeatMap(const std::vector<std::vector<bool>>& seats) {
     for (char c = 'A'; c < 'A' + 10; ++c) std::cout << " " << c;
     std::cout << "\n";
 
-    for (size_t row = 0; row < 10; ++row) { 
+    for (size_t row = 0; row < 10; ++row) {
         if (row + 1 < 10) std::cout << " " << row + 1 << " ";
         else std::cout << row + 1 << " ";
-        for (size_t col = 0; col < 10; ++col) { 
+        for (size_t col = 0; col < 10; ++col) {
             std::cout << (seats[row][col] ? " X" : " _");
         }
         std::cout << "\n";
     }
-}
-
-std::string toUpper(const std::string& s) {
-    std::string result = s;
-    for (char& c : result) c = static_cast<char>(toupper(static_cast<unsigned char>(c)));
-    return result;
 }
 
 bool isValidSeatCode(const std::string& code) {
@@ -68,7 +57,15 @@ std::pair<int, int> decodeSeat(const std::string& code) {
     return { row, col };
 }
 
-void bookTicket(std::vector<Cinema>& cinemas, std::vector<Booking>& bookings) {
+void bookTicket(std::vector<Cinema>& cinemas) {
+    if (currentLoggedInUser.username.empty()) {
+        std::cout << "\nPlease log in to book tickets.\n";
+        std::cout << "\nPress Enter to return to the main menu...";
+        std::cin.get();
+        clearScreen();
+        return;
+    }
+
     clearScreen();
     displayCinemas(cinemas);
     int cinemaChoice = getValidInput(static_cast<int>(cinemas.size()));
@@ -88,7 +85,11 @@ void bookTicket(std::vector<Cinema>& cinemas, std::vector<Booking>& bookings) {
 
     std::cout << "\nEnter number of tickets: ";
     int tickets;
-    std::cin >> tickets;
+    while (!(std::cin >> tickets) || tickets <= 0 || tickets > (10 * 10)) {
+        std::cout << "Invalid number of tickets. Please enter a positive number up to " << (10 * 10) << ": ";
+        std::cin.clear();
+        clearInputBuffer();
+    }
     clearInputBuffer();
 
     std::vector<std::string> selectedSeats;
@@ -96,7 +97,8 @@ void bookTicket(std::vector<Cinema>& cinemas, std::vector<Booking>& bookings) {
     for (int i = 0; i < tickets; ++i) {
         while (true) {
             clearScreen();
-            std::cout << "\nSelect seat for ticket #" << (i + 1) << ":\n";
+            std::cout << "\nSelect seat for ticket #" << (i + 1) << " for movie " << selectedMovie.title
+                << " at " << selectedShowtime << " in " << selectedCinema.name << ":\n";
             displaySeatMap(seats);
             std::cout << "Enter seat (e.g., 3C): ";
             std::string seatCode;
@@ -104,7 +106,7 @@ void bookTicket(std::vector<Cinema>& cinemas, std::vector<Booking>& bookings) {
             seatCode = toUpper(seatCode);
 
             if (!isValidSeatCode(seatCode)) {
-                std::cout << "Invalid format. Try again.\n";
+                std::cout << "Invalid seat format. Try again.\n";
                 std::cin.get();
                 continue;
             }
@@ -113,20 +115,32 @@ void bookTicket(std::vector<Cinema>& cinemas, std::vector<Booking>& bookings) {
             int row = seatPos.first;
             int col = seatPos.second;
 
-            // Ensure row and col are within bounds before accessing
             if (row < 0 || row >= 10 || col < 0 || col >= 10) {
-                std::cout << "Seat out of bounds. Try again.\n";
+                std::cout << "Internal error: Decoded seat out of expected bounds. Please report this.\n";
                 std::cin.get();
                 continue;
             }
 
-            if (seats[static_cast<size_t>(row)][static_cast<size_t>(col)]) { // Cast to size_t
-                std::cout << "Seat already taken. Choose another.\n";
+            if (seats[static_cast<size_t>(row)][static_cast<size_t>(col)]) {
+                std::cout << "Seat " << seatCode << " is already taken. Choose another.\n";
                 std::cin.get();
                 continue;
             }
 
-            seats[static_cast<size_t>(row)][static_cast<size_t>(col)] = true; // Cast to size_t
+            bool alreadySelectedInSession = false;
+            for (const auto& s : selectedSeats) {
+                if (s == seatCode) {
+                    alreadySelectedInSession = true;
+                    break;
+                }
+            }
+            if (alreadySelectedInSession) {
+                std::cout << "You have already selected seat " << seatCode << " for this booking. Choose another.\n";
+                std::cin.get();
+                continue;
+            }
+
+            seats[static_cast<size_t>(row)][static_cast<size_t>(col)] = true;
             selectedSeats.push_back(seatCode);
             break;
         }
@@ -135,6 +149,7 @@ void bookTicket(std::vector<Cinema>& cinemas, std::vector<Booking>& bookings) {
     double totalPrice = tickets * selectedMovie.price;
 
     Booking newBooking = {
+        currentLoggedInUser.username,
         selectedCinema.name,
         selectedMovie.title,
         selectedShowtime,
@@ -143,10 +158,37 @@ void bookTicket(std::vector<Cinema>& cinemas, std::vector<Booking>& bookings) {
         selectedSeats
     };
 
+    currentLoggedInUser.userBookings.push_back(newBooking);
+    saveUserBookings(currentLoggedInUser.username, currentLoggedInUser.userBookings);
+
     clearScreen();
     displayBookingConfirmation(newBooking);
-    bookings.push_back(newBooking);
+    std::cout << "\nYour booking has been successfully recorded!\n";
+    std::cout << "\nPress Enter to return to the main menu...";
+    std::cin.get();
+    clearScreen();
+}
 
+void displayMyBookings() {
+    clearScreen();
+    if (currentLoggedInUser.username.empty()) {
+        std::cout << "\nPlease log in to view your bookings.\n";
+        std::cout << "\nPress Enter to return to the main menu...";
+        std::cin.get();
+        clearScreen();
+        return;
+    }
+
+    std::cout << "\n=== Your Bookings (" << currentLoggedInUser.username << ") ===\n";
+    if (currentLoggedInUser.userBookings.empty()) {
+        std::cout << "You have no bookings yet.\n";
+    }
+    else {
+        for (const auto& booking : currentLoggedInUser.userBookings) {
+            displayBookingConfirmation(booking);
+            std::cout << "\n";
+        }
+    }
     std::cout << "\nPress Enter to return to the main menu...";
     std::cin.get();
     clearScreen();
@@ -191,49 +233,62 @@ int main() {
                  {"11:00", "15:00", "19:30"}, 12.00, 16)
         })
     };
-    /*
-    for (auto& cinema : cinemas) {
-        for (auto& movie : cinema.movies) {
-            for (const auto& time : movie.showtimes) {
-                // Ensure the map key exists before accessing
-                if (movie.seatMaps.find(time) == movie.seatMaps.end()) {
-                    movie.seatMaps[time] = std::vector<std::vector<bool>>(10, std::vector<bool>(10, false));
-                }
-            }
-        }
-    }
-    */
 
-
-    std::vector<Booking> bookings;
+    std::vector<User> allUsers;
+    loadUsers(allUsers);
 
     while (true) {
         clearScreen();
         displayLogo();
         std::cout << "\nWelcome to CINEMA Booking System!\n\n";
-        std::cout << "1. Book a Ticket\n";
-        std::cout << "2. Support / File a Complaint\n";
-        std::cout << "3. Exit\n\n";
 
-        int choice = getValidInput(3);
-        if (choice == 1) {
-            bookTicket(cinemas, bookings);
+        if (currentLoggedInUser.username.empty()) {
+            std::cout << "1. Register\n";
+            std::cout << "2. Login\n";
+            std::cout << "3. Exit\n\n";
+            int choice = getValidInput(3);
+
+            if (choice == 1) {
+                registerUser(allUsers);
+            }
+            else if (choice == 2) {
+                loginUser(allUsers);
+            }
+            else if (choice == 3) {
+                break;
+            }
         }
-        else if (choice == 2) {
-            supportPage();
-        }
-        else if (choice == 3) {
-            break;
+        else {
+            std::cout << "Logged in as: " << currentLoggedInUser.username << "\n\n";
+            std::cout << "1. Book a Ticket\n";
+            std::cout << "2. My Bookings\n";
+            std::cout << "3. Support / File a Complaint\n";
+            std::cout << "4. Logout\n";
+            std::cout << "5. Exit\n\n";
+            int choice = getValidInput(5);
+
+            if (choice == 1) {
+                bookTicket(cinemas);
+            }
+            else if (choice == 2) {
+                displayMyBookings();
+            }
+            else if (choice == 3) {
+                supportPage();
+            }
+            else if (choice == 4) {
+                logoutUser();
+            }
+            else if (choice == 5) {
+                if (!currentLoggedInUser.username.empty()) {
+                    saveUserBookings(currentLoggedInUser.username, currentLoggedInUser.userBookings);
+                }
+                break;
+            }
         }
     }
 
     clearScreen();
-    std::cout << "\n=== Your Bookings ===\n";
-    for (const auto& booking : bookings) {
-        displayBookingConfirmation(booking);
-        std::cout << "\n";
-    }
-
     std::cout << "\nThank you for using CINEMA Booking System!\n";
     return 0;
 }

@@ -1,9 +1,7 @@
 #ifndef CINEMA_H
 #define CINEMA_H
 
-#include <string>
-#include <vector>
-#include "movie.h"
+class Movie;
 
 class Cinema {
 public:
@@ -18,10 +16,10 @@ public:
     {
     }
 
-    
+    Cinema() {}
 };
 
 void displayCinemas(const std::vector<Cinema>& cinemas);
 void displayMovies(const Cinema& cinema);
 
-#endif 
+#endif
