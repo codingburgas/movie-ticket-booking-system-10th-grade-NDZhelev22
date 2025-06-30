@@ -1,6 +1,5 @@
 #include "precompiler.h"
 
-// Definition of the global currentLoggedInUser object
 User currentLoggedInUser;
 
 void displayLogo();
@@ -9,8 +8,9 @@ bool isValidSeatCode(const std::string& code);
 std::pair<int, int> decodeSeat(const std::string& code);
 
 void bookTicket(std::vector<Cinema>& cinemas);
-void displayMyBookings();
-void supportPage();
+void cancelBooking(std::vector<Cinema>& cinemas);
+void displayMyBookings(); // Declaration
+void supportPage();      // Declaration
 
 void displayLogo() {
     std::cout << R"(
@@ -93,6 +93,7 @@ void bookTicket(std::vector<Cinema>& cinemas) {
     clearInputBuffer();
 
     std::vector<std::string> selectedSeats;
+    std::vector<std::pair<int, int>> selectedSeatPositions;
 
     for (int i = 0; i < tickets; ++i) {
         while (true) {
@@ -142,32 +143,136 @@ void bookTicket(std::vector<Cinema>& cinemas) {
 
             seats[static_cast<size_t>(row)][static_cast<size_t>(col)] = true;
             selectedSeats.push_back(seatCode);
+            selectedSeatPositions.push_back(seatPos);
             break;
         }
     }
 
     double totalPrice = tickets * selectedMovie.price;
 
-    Booking newBooking = {
-        currentLoggedInUser.username,
-        selectedCinema.name,
-        selectedMovie.title,
-        selectedShowtime,
-        tickets,
-        totalPrice,
-        selectedSeats
-    };
-
-    currentLoggedInUser.userBookings.push_back(newBooking);
-    saveUserBookings(currentLoggedInUser.username, currentLoggedInUser.userBookings);
-
     clearScreen();
-    displayBookingConfirmation(newBooking);
-    std::cout << "\nYour booking has been successfully recorded!\n";
+    std::cout << "\n--- Booking Summary ---\n";
+    std::cout << "Movie: " << selectedMovie.title << "\n";
+    std::cout << "Showtime: " << selectedShowtime << "\n";
+    std::cout << "Seats: ";
+    for (size_t i = 0; i < selectedSeats.size(); ++i) {
+        std::cout << selectedSeats[i] << (i == selectedSeats.size() - 1 ? "" : ", ");
+    }
+    std::cout << "\nTotal amount: $" << std::fixed << std::setprecision(2) << totalPrice << "\n";
+    std::cout << "-----------------------\n";
+
+    std::cout << "\nProceed with payment? (Y/N): ";
+    std::string paymentConfirm;
+    std::getline(std::cin, paymentConfirm);
+    paymentConfirm = toUpper(paymentConfirm);
+
+    if (paymentConfirm == "Y") {
+        std::cout << "\nProcessing payment...\n";
+        std::cout << "Payment successful!\n";
+        notifyUser("New booking confirmed for " + currentLoggedInUser.username + " for movie '" + selectedMovie.title + "'.");
+
+        Booking newBooking = {
+            currentLoggedInUser.username,
+            selectedCinema.name,
+            selectedMovie.title,
+            selectedShowtime,
+            tickets,
+            totalPrice,
+            selectedSeats
+        };
+
+        currentLoggedInUser.userBookings.push_back(newBooking);
+        saveUserBookings(currentLoggedInUser.username, currentLoggedInUser.userBookings);
+
+        clearScreen();
+        displayBookingConfirmation(newBooking);
+        std::cout << "\nYour booking has been successfully recorded!\n";
+
+    }
+    else {
+        std::cout << "\nPayment canceled. Booking not completed.\n";
+        for (const auto& pos : selectedSeatPositions) {
+            seats[static_cast<size_t>(pos.first)][static_cast<size_t>(pos.second)] = false;
+        }
+        notifyUser("Booking process for " + currentLoggedInUser.username + " was canceled.");
+    }
+
     std::cout << "\nPress Enter to return to the main menu...";
     std::cin.get();
     clearScreen();
 }
+
+void cancelBooking(std::vector<Cinema>& cinemas) {
+    clearScreen();
+    if (currentLoggedInUser.username.empty()) {
+        std::cout << "\nPlease log in to cancel bookings.\n";
+        std::cout << "\nPress Enter to return to the main menu...";
+        std::cin.get();
+        clearScreen();
+        return;
+    }
+
+    if (currentLoggedInUser.userBookings.empty()) {
+        std::cout << "\nYou have no bookings to cancel.\n";
+        std::cout << "\nPress Enter to return to the main menu...";
+        std::cin.get();
+        clearScreen();
+        return;
+    }
+
+    std::cout << "\n=== Your Bookings (" << currentLoggedInUser.username << ") ===\n";
+    for (size_t i = 0; i < currentLoggedInUser.userBookings.size(); ++i) {
+        const auto& booking = currentLoggedInUser.userBookings[i];
+        std::cout << (i + 1) << ". Movie: " << booking.movie
+            << ", Cinema: " << booking.cinema
+            << ", Showtime: " << booking.showtime
+            << ", Seats: ";
+        for (size_t j = 0; j < booking.selectedSeats.size(); ++j) {
+            std::cout << booking.selectedSeats[j] << (j == booking.selectedSeats.size() - 1 ? "" : ", ");
+        }
+        std::cout << "\n";
+    }
+
+    std::cout << "\nEnter the number of the booking to cancel (or 0 to go back): ";
+    int bookingChoice = getValidInput(static_cast<int>(currentLoggedInUser.userBookings.size()));
+
+    if (bookingChoice == 0) {
+        clearScreen();
+        return;
+    }
+
+    Booking bookingToCancel = currentLoggedInUser.userBookings[static_cast<size_t>(bookingChoice) - 1];
+
+    bool seatsReverted = false;
+    for (auto& cinema : cinemas) {
+        if (cinema.name == bookingToCancel.cinema) {
+            for (auto& movie : cinema.movies) {
+                if (movie.title == bookingToCancel.movie) {
+                    if (movie.seatMaps.count(bookingToCancel.showtime)) {
+                        std::vector<std::vector<bool>>& seats = movie.seatMaps[bookingToCancel.showtime];
+                        for (const auto& seatCode : bookingToCancel.selectedSeats) {
+                            std::pair<int, int> seatPos = decodeSeat(seatCode);
+                            seats[static_cast<size_t>(seatPos.first)][static_cast<size_t>(seatPos.second)] = false;
+                        }
+                        seatsReverted = true;
+                        break;
+                    }
+                }
+            }
+            if (seatsReverted) break;
+        }
+    }
+
+    currentLoggedInUser.userBookings.erase(currentLoggedInUser.userBookings.begin() + (bookingChoice - 1));
+    saveUserBookings(currentLoggedInUser.username, currentLoggedInUser.userBookings);
+
+    notifyUser("Booking for movie '" + bookingToCancel.movie + "' at " + bookingToCancel.showtime + " has been canceled.");
+    std::cout << "\nBooking successfully canceled!\n";
+    std::cout << "\nPress Enter to return to the main menu...";
+    std::cin.get();
+    clearScreen();
+}
+
 
 void displayMyBookings() {
     clearScreen();
@@ -206,31 +311,44 @@ void supportPage() {
     clearScreen();
 }
 
+
 int main() {
     std::vector<Cinema> cinemas = {
         Cinema("CineGrand Burgas", "Mall Galleria", {
             Movie("Avatar: The Way of Water", "Sci-Fi", "James Cameron", 192,
-                 {"10:00", "14:30", "19:00"}, 12.50, 12),
+                 {"10:00", "14:30", "19:00", "22:30"}, 12.50, 12),
             Movie("Titanic", "Romance", "James Cameron", 195,
-                 {"11:00", "15:30"}, 8.50, 12),
+                 {"11:00", "15:30", "20:00"}, 8.50, 12),
             Movie("Paw Patrol: The Mighty Movie", "Animation", "Cal Brunker", 88,
-                 {"09:30", "12:00", "14:15"}, 7.00, 0)
+                 {"09:30", "12:00", "14:15", "16:30"}, 7.00, 0),
+            Movie("Dune: Part Two", "Sci-Fi", "Denis Villeneuve", 166,
+                 {"10:15", "13:45", "17:15", "20:45"}, 14.00, 12)
         }),
         Cinema("CineMax Varna", "Mall Varna", {
             Movie("The Batman", "Action", "Matt Reeves", 176,
                  {"10:30", "14:00", "18:30", "22:00"}, 11.00, 15),
             Movie("Inception", "Sci-Fi", "Christopher Nolan", 148,
-                 {"13:00", "16:30", "20:00"}, 9.50, 12),
+                 {"13:00", "16:30", "20:00", "23:00"}, 9.50, 12),
             Movie("Barbie", "Comedy", "Greta Gerwig", 114,
-                 {"11:30", "14:45", "17:30"}, 10.50, 12)
+                 {"11:30", "14:45", "17:30", "20:15"}, 10.50, 12),
+            Movie("Oppenheimer", "Biography", "Christopher Nolan", 180,
+                 {"11:00", "15:00", "19:30"}, 12.00, 16)
         }),
         Cinema("Cineplex Sofia", "The Paradise Center", {
             Movie("Frozen II", "Animation", "Chris Buck", 103,
-                 {"10:00", "12:30", "15:00"}, 8.00, 0),
+                 {"10:00", "12:30", "15:00", "17:30"}, 8.00, 0),
             Movie("Joker", "Drama", "Todd Phillips", 122,
-                 {"13:30", "16:45", "20:15"}, 10.00, 18),
-            Movie("Oppenheimer", "Biography", "Christopher Nolan", 180,
-                 {"11:00", "15:00", "19:30"}, 12.00, 16)
+                 {"13:30", "16:45", "20:15", "22:45"}, 10.00, 18),
+            Movie("Spider-Man: Across the Spider-Verse", "Animation", "Joaquim Dos Santos", 140,
+                 {"10:45", "13:30", "16:15", "19:00"}, 11.50, 6)
+        }),
+        Cinema("Arena Plovdiv", "Mall Plovdiv", {
+            Movie("Guardians of the Galaxy Vol. 3", "Sci-Fi", "James Gunn", 150,
+                 {"10:00", "13:00", "16:00", "19:00", "22:00"}, 13.00, 12),
+            Movie("The Super Mario Bros. Movie", "Animation", "Aaron Horvath", 92,
+                 {"09:00", "11:00", "13:00", "15:00"}, 7.50, 0),
+            Movie("Mission: Impossible - Dead Reckoning Part One", "Action", "Christopher McQuarrie", 163,
+                 {"11:30", "15:00", "18:30", "21:45"}, 13.50, 12)
         })
     };
 
@@ -262,10 +380,11 @@ int main() {
             std::cout << "Logged in as: " << currentLoggedInUser.username << "\n\n";
             std::cout << "1. Book a Ticket\n";
             std::cout << "2. My Bookings\n";
-            std::cout << "3. Support / File a Complaint\n";
-            std::cout << "4. Logout\n";
-            std::cout << "5. Exit\n\n";
-            int choice = getValidInput(5);
+            std::cout << "3. Cancel Booking\n";
+            std::cout << "4. Support / File a Complaint\n";
+            std::cout << "5. Logout\n";
+            std::cout << "6. Exit\n\n";
+            int choice = getValidInput(6);
 
             if (choice == 1) {
                 bookTicket(cinemas);
@@ -274,12 +393,15 @@ int main() {
                 displayMyBookings();
             }
             else if (choice == 3) {
-                supportPage();
+                cancelBooking(cinemas);
             }
             else if (choice == 4) {
-                logoutUser();
+                supportPage();
             }
             else if (choice == 5) {
+                logoutUser();
+            }
+            else if (choice == 6) {
                 if (!currentLoggedInUser.username.empty()) {
                     saveUserBookings(currentLoggedInUser.username, currentLoggedInUser.userBookings);
                 }

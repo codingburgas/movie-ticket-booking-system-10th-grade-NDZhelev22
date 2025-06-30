@@ -1,4 +1,4 @@
-#include "precompiler.h" // Includes all necessary headers including user.h and utils.h
+#include "precompiler.h"
 
 void registerUser(std::vector<User>& users) {
     clearScreen();

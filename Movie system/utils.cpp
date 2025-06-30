@@ -1,4 +1,4 @@
-#include "precompiler.h" // This will pull in all necessary headers for definitions
+#include "precompiler.h"
 
 void clearScreen() {
 #ifdef _WIN32
@@ -148,4 +148,19 @@ void saveUserBookings(const std::string& username, const std::vector<Booking>& u
     else {
         std::cerr << "Error: Could not open booking file for " << username << " for writing.\n";
     }
+}
+
+void notifyUser(const std::string& message) {
+    auto now = std::chrono::system_clock::now();
+    std::time_t currentTime = std::chrono::system_clock::to_time_t(now);
+    // Use localtime_s for safer handling on Visual Studio
+    std::tm localTimeStruct;
+    if (localtime_s(&localTimeStruct, &currentTime) == 0) {
+        std::cout << "\n--- Notification [" << std::put_time(&localTimeStruct, "%Y-%m-%d %H:%M:%S") << "] ---\n";
+    }
+    else {
+        std::cout << "\n--- Notification [Timestamp Error] ---\n";
+    }
+    std::cout << message << "\n";
+    std::cout << "-------------------------------------\n";
 }
