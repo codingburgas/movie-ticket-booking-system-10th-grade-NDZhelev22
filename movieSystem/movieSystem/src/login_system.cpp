@@ -1,28 +1,20 @@
 #include "../include/precompiler.h"
 
-// Function definition
 void registerUser(std::vector<User>& users) {
     clearScreen();
     std::cout << "\n=== Register New Account ===\n";
     std::string username, password;
 
-    // Input loop with validation checks
     while (true) {
         std::cout << "Enter desired username: ";
         std::getline(std::cin, username);
 
-        // Conditional checks on string properties
-        if (username.empty() || username.length() > 20 ||
-            username.find('|') != std::string::npos ||
-            username.find(',') != std::string::npos ||
-            username.find(' ') != std::string::npos) {
+        if (username.empty() || username.length() > 20 || username.find('|') != std::string::npos || username.find(',') != std::string::npos || username.find(' ') != std::string::npos) {
             std::cout << "Username cannot be empty, longer than 20 characters, or contain spaces, '|', or ',' characters. Please try again.\n";
             continue;
         }
 
         bool usernameExists = false;
-
-        // Range-based for loop with member access
         for (const auto& user : users) {
             if (user.username == username) {
                 usernameExists = true;
@@ -38,12 +30,10 @@ void registerUser(std::vector<User>& users) {
         }
     }
 
-    // Input loop with validation for password
     while (true) {
         std::cout << "Enter password: ";
         std::getline(std::cin, password);
-        if (password.empty() || password.length() < 4 || password.length() > 30 ||
-            password.find('|') != std::string::npos) {
+        if (password.empty() || password.length() < 4 || password.length() > 30 || password.find('|') != std::string::npos) {
             std::cout << "Password cannot be empty, shorter than 4 or longer than 30 characters, or contain '|' characters. Please try again.\n";
         }
         else {
@@ -51,12 +41,8 @@ void registerUser(std::vector<User>& users) {
         }
     }
 
-    // Function call to hashing utility
     std::string hashedPassword = simpleHash(password);
-
-    // Use of emplace_back constructor in vector
-    users.emplace_back(username, hashedPassword);
-
+    users.emplace_back(username, hashedPassword); // Constructor handles setting the private hashedPassword
     saveUsers(users);
 
     std::cout << "\nAccount registered successfully!\n";
@@ -65,7 +51,6 @@ void registerUser(std::vector<User>& users) {
     clearScreen();
 }
 
-// Function definition returning boolean
 bool loginUser(std::vector<User>& users) {
     clearScreen();
     std::cout << "\n=== Login ===\n";
@@ -77,18 +62,14 @@ bool loginUser(std::vector<User>& users) {
     std::cout << "Enter password: ";
     std::getline(std::cin, password);
 
-    // Function call to hashing utility
-    std::string hashedPassword = simpleHash(password);
+    std::string hashedPasswordInput = simpleHash(password); // Hash the input password for comparison
 
-    // Range-based for loop with conditionals
     for (auto& user : users) {
         if (user.username == username) {
-            if (user.hashedPassword == hashedPassword) {
-                // Assignment of global or external variable
+            // Use the public getter method to access the private hashedPassword for comparison
+            if (user.getHashedPassword() == hashedPasswordInput) {
                 currentLoggedInUser = user;
-
                 loadUserBookings(currentLoggedInUser.username, currentLoggedInUser.userBookings);
-
                 std::cout << "\nLogin successful! Welcome, " << currentLoggedInUser.username << "!\n";
                 std::cout << "\nPress Enter to continue...";
                 std::cin.get();
@@ -112,15 +93,21 @@ bool loginUser(std::vector<User>& users) {
     return false;
 }
 
-// Function definition
 void logoutUser() {
-    // Conditional check on member variable
     if (!currentLoggedInUser.username.empty()) {
         saveUserBookings(currentLoggedInUser.username, currentLoggedInUser.userBookings);
+        // To ensure loyalty points are saved on logout, we need to update the allUsers vector
+        std::vector<User> allUsers;
+        loadUsers(allUsers); // Load all users
+        for (auto& user : allUsers) {
+            if (user.username == currentLoggedInUser.username) {
+                user.loyaltyPoints = currentLoggedInUser.loyaltyPoints; // Update points for the logged out user
+                break;
+            }
+        }
+        saveUsers(allUsers); // Save all users with updated points
 
-        // Object reinitialization via default constructor
-        currentLoggedInUser = User();
-
+        currentLoggedInUser = User(); // Reset the global logged-in user object
         std::cout << "\nLogged out successfully.\n";
     }
     else {

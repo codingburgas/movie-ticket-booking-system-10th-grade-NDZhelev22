@@ -8,9 +8,7 @@ extern class User currentLoggedInUser;
 class User {
 public:
     std::string username;
-    std::string hashedPassword;
     int loyaltyPoints;
-
     std::vector<Booking> userBookings;
 
     User(std::string username, std::string hashedPassword)
@@ -18,6 +16,17 @@ public:
     }
 
     User() : loyaltyPoints(0) {}
+
+    const std::string& getHashedPassword() const {
+        return hashedPassword;
+    }
+
+    void setHashedPassword(std::string newHashedPassword) {
+        hashedPassword = std::move(newHashedPassword);
+    }
+
+private:
+    std::string hashedPassword;
 };
 
 #endif
